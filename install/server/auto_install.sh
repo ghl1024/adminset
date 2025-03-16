@@ -104,7 +104,7 @@ fi
 # 配置CSRF信任域名（提前收集用户输入）
 echo "####配置CSRF信任域名####"
 echo "为了确保Django CSRF保护正常工作，需要配置可信任的域名"
-echo "请输入您将用于访问AdminSet的完整域名或IP地址（包括协议，如 https://www.example.com 或 http://192.168.1.100）:"
+echo "请输入您将用于访问AdminSet的完整域名或IP地址（包括协议，如 https://www.example.com 或 http://192.168.110.100）:"
 read -r domain_input
 
 # 去除输入的空格
@@ -339,18 +339,10 @@ echo "####安装AdminSet####"
 $venv_dir/bin/pip install --upgrade pip
 $venv_dir/bin/pip install --upgrade setuptools wheel
 
-# 安装django-celery-results和celery
-echo "安装django-celery-results和celery..."
-# 首先检查并卸载有问题的软件包
-$venv_dir/bin/pip uninstall -y django-celery-results celery
-
 # 安装特定版本的celery以避免无效依赖问题
 $venv_dir/bin/pip install celery==5.3.6
 $venv_dir/bin/pip install django-celery-results==2.5.1
 
-# 删除不再需要的django-celery-results源码
-echo "删除无用的django-celery-results源码..."
-rm -rf $adminset_dir/vendor/django-celery-results-master
 
 # 安装项目依赖
 cd $adminset_dir
@@ -469,9 +461,6 @@ if ! $venv_dir/bin/python $adminset_dir/create_admin.py; then
     echo "mysql -e \"INSERT INTO adminset.accounts_userinfo (username, email, password, is_active, is_superuser) VALUES ('admin', 'admin@126.com', 'pbkdf2_sha256\$600000\$S0dKZmP9REQ8FMVtWT54kA\$hdGCdT2qP0GzZJyiH3T2nOv9ULPDQtY1h+N/NI/jILU=', 1, 1);\""
 fi
 
-# 删除安装webssh相关代码 - 此功能已被禁用
-echo "跳过WebSSH安装..."
-
 # 修改systemd服务文件以使用虚拟环境
 echo "####更新systemd服务配置####"
 
@@ -495,8 +484,12 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF
 
-# 删除webssh服务相关文件 - 此功能已被禁用
-echo "WebSSH功能已被禁用，跳过配置WebSSH服务..."
+# 配置WebSSH服务
+echo "####配置WebSSH服务####"
+cp $adminset_dir/install/server/webssh/webssh.service /usr/lib/systemd/system
+systemctl daemon-reload
+systemctl enable webssh
+echo "WebSSH服务配置完成"
 
 # 备份并修改celery.service文件
 cp $adminset_dir/install/server/celery/celery.service $adminset_dir/install/server/celery/celery.service.bak
@@ -688,9 +681,6 @@ cp $adminset_dir/install/server/ssh/config ~/.ssh/config
 # 完成安装
 echo "#######等待启动服务##############"
 
-# 删除webssh检查及启动代码，不再需要
-echo "WebSSH功能已禁用，跳过相关检查和启动步骤..."
-
 # 检查并修复adminset.service中的参数问题
 echo "检查AdminSet服务配置..."
 if [ -f "/usr/lib/systemd/system/adminset.service" ]; then
@@ -797,10 +787,13 @@ EOF
 else
     echo "AdminSet服务已成功启动"
 fi
-
+# 备份原文件并强制复制新的 index.html
+cp -f /var/opt/adminset/venv/lib/python3.12/site-packages/webssh/templates/index.html /var/opt/adminset/venv/lib/python3.12/site-packages/webssh/templates/index.html.bak 2>/dev/null || true
+cp -f $adminset_dir/templates/vendor/webssh/index.html /var/opt/adminset/venv/lib/python3.12/site-packages/webssh/templates/index.html
+systemctl restart webssh
 systemctl restart nginx
 systemctl restart sshd
-echo "WebSSH功能已禁用"
 echo "请访问网站 http://服务器IP"
-echo "您已成功安装AdminSet!!!"
+echo "默认管理员账号为admin,密码为admin,请尽快更改"
+echo "恭喜，您已成功安装AdminSet!"
 echo "################################################"

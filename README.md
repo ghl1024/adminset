@@ -1,5 +1,5 @@
 # AdminSet 系统
-<img src="https://travis-ci.org/guohongze/adminset.svg?branch=master"></img> 
+![Build](https://img.shields.io/badge/Build-passing-green)
 <img src="https://img.shields.io/badge/license-GPL-blue.svg"></img>
 [![release](https://img.shields.io/github/release/guohongze/adminset.svg)](https://github.com/guohongze/adminset/releases)
 
@@ -122,11 +122,11 @@ systemctl start|stop|restart|status adminsetd
 - **作业调度**：定时任务和批量作业管理
 - **监控系统**：服务器性能和应用状态监控（使用MySQL存储监控数据）
 - **工单系统**：IT服务请求和问题跟踪
+- **webssh**：直接web免terminal登录
 - **权限管理**：基于角色的访问控制
 
 ## 最新更改
 
-- **已移除WebSSH功能**：为增强系统安全性和简化架构，已移除WebSSH功能
 - **监控数据存储**：监控数据现在支持使用MySQL存储，不再强依赖MongoDB
 - **UI优化**：简化了用户界面，移除了不必要的按钮和功能入口
 - **安全加固**：增强了系统安全性，减少了潜在的攻击面
@@ -137,44 +137,18 @@ systemctl start|stop|restart|status adminsetd
     自动安装的用户名admin 密码admin
     手动安装使用自定义创建的super admin用户名密码
 
-## 项目部署建议
 
-在Ubuntu 24.04 LTS上部署时建议：
+## **webssh功能**：
+   - 为测试功能，严禁在公网使用。
+   - webssh功能需要先配置应用管理中-认证中心-添加信息，保存用户名和密码，然后再从主机编辑中账号信息选择关联。
+   - 如果不是超管用户，需要在role里进行授权才可使用webssh功能。
 
-1. **使用系统包管理器**：使用apt安装依赖，而不是手动编译
-
-2. **数据库选择**：
-   - 核心业务数据使用MariaDB/MySQL存储
-   - 监控数据可使用MariaDB/MySQL或MongoDB存储（根据实际需求配置）
-
-3. **Web服务器配置**：
-   - 生产环境使用Nginx + Gunicorn部署
-   - Nginx配置文件已更新，支持Ubuntu 24.04默认路径
-
-4. **虚拟环境管理**：
-   - 推荐使用Python venv创建隔离环境
-   - 在虚拟环境中安装项目依赖
-
-5. **定时任务处理**：
-   - 使用systemd管理Celery和Beat服务
-   - Celery配置已优化，支持最新版本
-
-## 故障排除
-
-如果您在Ubuntu 24.04上遇到问题：
-
-1. **依赖问题**：确保已安装libssl-dev和libldap2-dev
-
-2. **数据库连接**：检查MySQL/MariaDB服务是否正常运行
-
-3. **权限问题**：确保应用目录具有正确的所有权和权限
-
-4. **日志查看**：
+## **日志查看**：
    ```bash
    tail -f /var/opt/adminset/logs/adminset-error.log
    ```
-
-5. **服务状态**：
+   
+   **服务状态**：
    ```bash
    systemctl status adminset.service
    systemctl status celery.service
